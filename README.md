@@ -229,6 +229,14 @@ Run the notebooks in this order:
 
 The first notebook generates the core processed tables used by the downstream notebooks.
 
+## How to Download the Repository
+
+The repository can be downloaded using Git:
+
+```bash
+git clone https://github.com/GiovanniMerici/Salmonella_Virulence.git
+cd Salmonella_Virulence
+
 ## Contact
 
 Giovanni Merici  
