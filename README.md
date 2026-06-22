@@ -1,121 +1,339 @@
-# Genomics of Virulence Diversity in Non-Typhoidal *Salmonella*: Machine Learning Analysis
+# Genomics of Virulence Diversity in Non-Typhoidal *Salmonella*: A Machine Learning Study
 
-This repository contains the code used for the analyses described in:
+This repository contains the code and input data used for the analyses described in the manuscript:
 
-**Merici et al.** Genomics of virulence diversity in non-typhoidal *Salmonella*: a machine learning study.
+**Genomics of virulence diversity in non-typhoidal *Salmonella*: a machine learning study**
+
+The study investigates genomic differences among non-typhoidal *Salmonella enterica* serovars with different levels of representation in human infections. The workflow combines wgMLST-based gene presence/absence profiling, machine learning, functional annotation clustering, and spatial genomic analysis of discriminative genes.
 
 ## Repository Structure
 
 ```text
-├── enterobase_stopcodon.py
-├── second_hpc_script.py
+.
+├── README.md
 ├── environment_salmonella.yml
-├── notebooks/
-│   ├── PCA_Kmeans_RF_SVM.ipynb
-│   ├── BERTopic_functional_analysis.ipynb
-│   ├── localization_network_analysis.ipynb
-│   └── phylogenetic_visualization.ipynb
-└── README.md
+├── Input_Data/
+│   ├── Typhimurium_prediction.csv
+│   ├── Mono_prediction.csv
+│   ├── Enteritidis_prediction.csv
+│   ├── Derby_prediction.csv
+│   ├── Rissen_prediction.csv
+│   ├── Kentucky_prediction.csv
+│   ├── Typhimurium_Asia_m.csv
+│   ├── Mono_Asia_m.csv
+│   ├── Enteritidis_Asia_m.csv
+│   ├── Derby_Asia_m.csv
+│   ├── Rissen_Asia_m.csv
+│   └── Kentucky_Asia_m.csv
+└── notebooks/
+    ├── enterobase_stopcodon_v1.ipynb
+    ├── enterobase_stopcodon_v1_random_controls.ipynb
+    ├── bertopic_functional_annotation_v1.ipynb
+    └── spatial_genomics_v1.ipynb
 ```
 
-### HPC Scripts
+## Study Overview
 
-#### 1. `enterobase_stopcodon.py`
+The analysis compares six non-typhoidal *Salmonella enterica* serovars.
 
-Main preprocessing pipeline used on the HPC cluster.
+### Virulent-associated serovars
 
-Functions:
+```text
+S. Typhimurium
+S. 4,[5],12:i:- / monophasic S. Typhimurium
+S. Enteritidis
+```
 
-* Import EnteroBase wgMLST allelic profiles.
-* Identify alleles containing premature stop codons relative to allele 1.
-* Recode:
+### Attenuated-associated serovars
 
-  * missing loci (`-`)
-  * truncated loci (`-1`)
-  * alleles with premature stop codons
-    as **absence (0)**.
-* Convert wgMLST profiles into a binary presence/absence matrix.
-* Remove duplicated genomic profiles.
-* Remove invariant loci.
+```text
+S. Derby
+S. Rissen
+S. Kentucky
+```
 
-Output:
+In this repository, the terms **virulent-associated** and **attenuated-associated** refer to the grouping used in the study design. Virulent-associated serovars are those more strongly represented among human infections relative to selected animal reservoirs. Attenuated-associated serovars are commonly isolated from animal reservoirs but comparatively underrepresented among human infections.
 
-* Binary gene presence/absence matrix used for all downstream analyses.
+## Input Data
 
-#### 2. `second_hpc_script.py`
+The `Input_Data/` folder contains EnteroBase wgMLST allelic profile tables.
 
-Machine learning workflow.
+### Main dataset
 
-Functions:
+```text
+Typhimurium_prediction.csv
+Mono_prediction.csv
+Enteritidis_prediction.csv
+Derby_prediction.csv
+Rissen_prediction.csv
+Kentucky_prediction.csv
+```
 
-* Principal Component Analysis (PCA)
-* K-means clustering
-* Random Forest classification
-* Support Vector Machine (SVM)
-* Feature importance extraction
-* Iterative Random Forest reduction
-* Identification of the minimal 22-gene discriminatory set
-* Validation on the independent Asian dataset
+These six files correspond to the main dataset used to generate the binary gene presence/absence matrix and train the machine learning models.
 
-Outputs:
+### Independent Asian validation dataset
 
-* PCA coordinates
-* Clustering assignments
-* Random Forest importance scores
-* SVM coefficients
-* ROC curves
-* 22-gene discriminative panel
+```text
+Typhimurium_Asia_m.csv
+Mono_Asia_m.csv
+Enteritidis_Asia_m.csv
+Derby_Asia_m.csv
+Rissen_Asia_m.csv
+Kentucky_Asia_m.csv
+```
 
-### Notebooks
+These files are used as an independent validation dataset for the reduced discriminative gene panel.
 
-The remaining notebooks perform downstream analyses and figure generation and can be executed on Google Colab.
+## Analysis Workflow
 
-These include:
+The workflow includes four main components.
 
-* Functional annotation analysis using PubMedBERT and BERTopic
-* Localization and community detection analyses
-* Visualization of discriminative genes
-* Figure generation
-* Phylogenetic data visualization
+### 1. Dataset preparation and machine learning
 
-## Installation
+Notebook:
 
-Create the Conda environment:
+```text
+notebooks/enterobase_stopcodon_v1.ipynb
+```
+
+This notebook performs the main dataset preparation and machine learning analyses.
+
+Main steps:
+
+- load wgMLST allelic profiles from EnteroBase;
+- identify missing and truncated loci;
+- identify alleles with premature stop codons;
+- recode missing, truncated, and premature-stop-codon alleles as absent;
+- recode all remaining alleles as present;
+- construct a binary gene presence/absence matrix;
+- remove duplicate profiles and uninformative loci;
+- run PCA;
+- run K-means clustering;
+- train Random Forest models;
+- train Support Vector Machine models;
+- extract feature-importance scores;
+- identify discriminative genes.
+
+Main inputs:
+
+```text
+Input_Data/Typhimurium_prediction.csv
+Input_Data/Mono_prediction.csv
+Input_Data/Enteritidis_prediction.csv
+Input_Data/Derby_prediction.csv
+Input_Data/Rissen_prediction.csv
+Input_Data/Kentucky_prediction.csv
+```
+
+Expected generated outputs include:
+
+```text
+matrix.csv
+matrixcorrected.csv
+truncated.csv
+virulence_importances.csv
+virulence_importances_purged.csv
+taxonomy_importances.csv
+svmp_importances_conf.csv
+pca_load_conf.csv
+f22_features_selected.csv
+```
+
+Depending on the execution environment, these files may be written to the current working directory or to `Input_Data/`.
+
+### 2. Random-control and validation analyses
+
+Notebook:
+
+```text
+notebooks/enterobase_stopcodon_v1_random_controls.ipynb
+```
+
+This notebook contains supplementary validation analyses.
+
+Main steps:
+
+- random-label controls;
+- random-gene controls;
+- comparison between the selected 22-gene panel and randomly selected gene sets;
+- validation on the independent Asian dataset.
+
+Main inputs:
+
+```text
+Input_Data/Typhimurium_Asia_m.csv
+Input_Data/Mono_Asia_m.csv
+Input_Data/Enteritidis_Asia_m.csv
+Input_Data/Derby_Asia_m.csv
+Input_Data/Rissen_Asia_m.csv
+Input_Data/Kentucky_Asia_m.csv
+```
+
+This notebook also uses outputs generated by `enterobase_stopcodon_v1.ipynb`, especially the selected-gene table.
+
+### 3. Functional annotation analysis with PubMedBERT and BERTopic
+
+Notebook:
+
+```text
+notebooks/bertopic_functional_annotation_v1.ipynb
+```
+
+This notebook performs functional annotation clustering of discriminative genes.
+
+Main steps:
+
+- load discriminative genes;
+- load or prepare EnteroBase functional annotations;
+- classify genes as enriched in virulent-associated or attenuated-associated serovars;
+- embed functional annotation text using PubMedBERT;
+- cluster annotation embeddings using BERTopic;
+- visualize functional clusters;
+- export topic tables.
+
+This notebook depends on processed outputs generated by the main machine-learning notebook.
+
+Typical required processed files include:
+
+```text
+virulence_importances_purged.csv
+cluster_conf.csv
+cluster_conf_merged.csv
+virulence_conf.fa
+```
+
+If these files are not already present, they should be generated by the earlier notebooks or added to the repository.
+
+### 4. Spatial genomic analysis
+
+Notebook:
+
+```text
+notebooks/spatial_genomics_v1.ipynb
+```
+
+This notebook analyzes the genomic organization of discriminative genes.
+
+Main steps:
+
+- map discriminative genes to representative genomes using BLASTn;
+- extract genomic coordinates;
+- identify genes located within 10 kb of one another;
+- construct gene-adjacency networks;
+- apply Leiden community detection;
+- compare shared communities among virulent-associated and attenuated-associated serovars;
+- generate spatial-genomics summary tables and figure panels.
+
+Representative genomes are downloaded automatically by the notebook when not already available locally.
+
+Typical required input files include:
+
+```text
+virulence_conf.fa
+cluster_conf.csv
+cluster_conf_merged.csv
+```
+
+These files are generated or used during the downstream analysis workflow.
+
+## Computational Environment
+
+The main preprocessing and machine-learning analyses were run on an HPC cluster.
+
+The downstream analyses can be run in Jupyter Notebook or Google Colab, provided that the required packages are installed.
+
+To recreate the Conda environment:
 
 ```bash
 conda env create -f environment_salmonella.yml
 conda activate salmonella
 ```
 
-## Input Data
+Some notebooks may install additional packages directly when executed in Google Colab.
 
-Input data consist of EnteroBase wgMLST allelic profiles from:
+## Suggested Execution Order
 
-* *S. Typhimurium*
-* monophasic *S. 4,[5],12:i:-*
-* *S. Enteritidis*
-* *S. Derby*
-* *S. Rissen*
-* *S. Kentucky*
-
-The original genomes were obtained from EnteroBase.
-
-## Computational Environment
-
-The preprocessing and machine learning analyses were executed on a High Performance Computing (HPC) cluster.
-
-The remaining analyses were developed and executed in Jupyter/Google Colab environments.
-
-## Reproducibility
-
-All package versions required to reproduce the analyses are provided in:
+Run the notebooks in this order:
 
 ```text
-environment_salmonella.yml
+1. notebooks/enterobase_stopcodon_v1.ipynb
+2. notebooks/enterobase_stopcodon_v1_random_controls.ipynb
+3. notebooks/bertopic_functional_annotation_v1.ipynb
+4. notebooks/spatial_genomics_v1.ipynb
 ```
+
+The first notebook generates the core processed tables used by the downstream notebooks.
+
+## Path Notes
+
+The repository stores raw input tables in:
+
+```text
+Input_Data/
+```
+
+If running notebooks from inside the `notebooks/` folder, paths should generally point to:
+
+```python
+../Input_Data/
+```
+
+If running notebooks from the repository root, paths should generally point to:
+
+```python
+Input_Data/
+```
+
+Some paths may need to be adjusted depending on whether the notebooks are executed locally, on an HPC cluster, or in Google Colab.
+
+## Main Outputs
+
+The workflow generates several processed tables and figures, including:
+
+```text
+matrix.csv
+matrixcorrected.csv
+truncated.csv
+virulence_importances.csv
+virulence_importances_purged.csv
+taxonomy_importances.csv
+svmp_importances_conf.csv
+pca_load_conf.csv
+f22_features_selected.csv
+cluster_conf.csv
+cluster_conf_merged.csv
+virulence_conf.fa
+```
+
+Important outputs include:
+
+- binary gene presence/absence matrix;
+- PCA loadings;
+- Random Forest feature importances;
+- SVM coefficients;
+- discriminative-gene tables;
+- reduced 22-gene panel;
+- BERTopic functional clusters;
+- spatial gene-community tables.
+
+## Reproducibility Notes
+
+The repository includes the main input tables and analysis notebooks. Some processed files are generated during notebook execution and may not be present before running the workflow.
+
+Large intermediate files and temporary scratch files are not required for reproducing the main analyses and are not included.
 
 ## Citation
 
-If you use this repository, please cite:
+If you use this repository, please cite the associated manuscript:
 
-Merici G. et al. Genomics of virulence diversity in non-typhoidal *Salmonella*: a machine learning study.
+```text
+Merici G. et al.
+Genomics of virulence diversity in non-typhoidal Salmonella:
+a machine learning study.
+```
+
+## Contact
+
+Giovanni Merici  
+University of Parma  
+giovanni.merici@unipr.it
